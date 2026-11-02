@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Resume Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef4ff;--card:#fff;--ink:#0f1b3d;--mute:#53648a;--line:#cfdcf6;--acc:#2563eb;--acc-ink:#fff;--good:#059669;--bad:#d97706;--chip:#dbe8ff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1228;--card:#111c3a;--ink:#e8efff;--mute:#9fb0d6;--line:#233461;--acc:#60a5fa;--acc-ink:#071330;--good:#34d399;--bad:#fbbf24;--chip:#14285a}}
+:root[data-theme="dark"]{--bg:#0a1228;--card:#111c3a;--ink:#e8efff;--mute:#9fb0d6;--line:#233461;--acc:#60a5fa;--acc-ink:#071330;--good:#34d399;--bad:#fbbf24;--chip:#14285a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.55 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:28px 18px 60px}
+h1{font-size:clamp(26px,5vw,34px);line-height:1.15;margin:0 0 6px;font-weight:800;letter-spacing:-.02em}
+h2{font-size:15px;margin:16px 0 6px;font-weight:800}h3{margin:0 0 4px;font-size:17px}
+p{margin:0 0 10px}.mute{color:var(--mute)}
+.hero{background:linear-gradient(135deg,#1e40af,#2563eb 55%,#0891b2);border-radius:18px;padding:26px 22px;box-shadow:0 10px 30px rgba(37,99,235,.28)}.hero h1{color:#fff}.hero p{color:#dbeafe;margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:16px}
+.row,.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn,select,.tab{font:inherit;font-weight:700;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 14px;cursor:pointer}
+.btn.main,.tab[aria-selected="true"]{background:linear-gradient(135deg,#1d4ed8,#0369a1);color:#fff;border-color:transparent}
+button:focus-visible,textarea:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+textarea{width:100%;min-height:130px;font:inherit;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{font:inherit;font-weight:700;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 13px;cursor:pointer}.chip[aria-pressed="true"]{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.score{font-size:52px;line-height:1;font-weight:800;background:linear-gradient(90deg,#2563eb,#06b6d4);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tag{display:inline-block;background:var(--chip);border-radius:8px;padding:2px 10px;margin:0 6px 6px 0;font-size:14px;font-weight:700}
+.tag.miss{background:transparent;border:1px dashed var(--mute);color:var(--mute)}
+.bar{height:7px;background:var(--line);border-radius:4px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#06b6d4)}
+.m{display:grid;grid-template-columns:140px 1fr 40px;gap:10px;align-items:center;margin:7px 0;font-size:14px}
+ul,ol{margin:0 0 8px;padding-left:20px}li{margin-bottom:4px}
+input[type=text]{font:inherit;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.g li::marker{color:var(--good)}.b li::marker{color:var(--bad)}
+.sec{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}.sec:first-child{border:0;margin:0;padding:0}
+@media (max-width:480px){.m{grid-template-columns:100px 1fr 36px}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+</head>
+<body>
+<main>
+<div class="hero"><h1>Resume analyzer</h1>
+<p>Upload your resume to see which roles fit, check it against a role, and get section-by-section feedback and interview questions. It runs in your browser, so your resume never leaves your device. No account or API key.</p></div>
+<div class="card">
+<h3>Your resume</h3>
+<p class="mute">PDF, Word (.docx) or text file. Scanned PDFs can’t be read, so paste the text below instead.</p>
+<input type="file" id="file" accept=".pdf,.docx,.txt" aria-label="Upload resume">
+<p id="msg" class="mute" style="margin:8px 0"></p>
+<textarea id="txt" placeholder="Or paste your resume text here" aria-label="Resume text"></textarea>
+<div class="actions" style="margin-top:12px"><button class="btn main" id="go">Analyze resume</button></div>
+</div>
+<div id="out"></div>
+</main>
+<script>
+const R=[
+["Full Stack Developer",["html","css","javascript","react","node.js","express","mongodb","sql","rest api","git","typescript","docker","next.js","authentication"],["Explain how data flows from a React component to the database and back.","How do you handle authentication and authorization in a full stack app?","What is the difference between SQL and NoSQL, and how do you choose?","How would you optimize a slow page that loads data from many APIs?"]],
+["Frontend Developer",["html","css","javascript","react","typescript","tailwind","redux","responsive","next.js","git","figma","accessibility","webpack","testing"],["Explain the virtual DOM and how React decides what to re-render.","How do you make a website responsive and accessible?","When would you use Context versus Redux?","How do you improve page load performance?"]],
+["Backend Developer",["node.js","python","java","django","flask","spring boot","sql","postgresql","mongodb","rest api","redis","docker","microservices","authentication"],["How would you design a REST API for an e-commerce app?","What is a database index and what are its trade-offs?","How do you handle caching and rate limiting?","Explain JWT versus session-based authentication."]],
+["Cloud / DevOps Engineer",["aws","azure","gcp","docker","kubernetes","terraform","ci/cd","jenkins","github actions","linux","ansible","monitoring","bash","networking"],["Explain a CI/CD pipeline from commit to production.","How is Docker different from a virtual machine?","How would you make an app highly available on AWS?","What is Infrastructure as Code and why use it?"]],
+["Data Analyst",["sql","excel","power bi","tableau","python","pandas","statistics","data visualization","dashboards","etl","numpy","reporting","data cleaning"],["How do you clean a messy dataset before analysis?","Explain the difference between INNER and LEFT JOIN.","How would you decide which chart to use for a business question?","What is the difference between mean, median and mode, and when does each mislead?"]],
+["Machine Learning Engineer",["python","machine learning","deep learning","tensorflow","pytorch","scikit-learn","pandas","numpy","nlp","computer vision","model deployment","sql","genai","llm"],["Explain overfitting and how you prevent it.","How do you choose evaluation metrics for an imbalanced dataset?","Walk through taking a model from notebook to production.","What is the difference between bagging and boosting?"]],
+["Software Engineer",["data structures","algorithms","java","python","c++","oop","git","sql","system design","problem solving","linux","testing","leetcode"],["Compare an array and a linked list.","Explain the four pillars of OOP with an example.","How would you detect a cycle in a linked list?","Design a URL shortener at a high level."]]];
+const SEC={summary:/^(professional |career )?(summary|objective|profile)|^about me/i,skills:/^(technical )?skills|^core competenc|^tech stack/i,experience:/^(work |professional )?(experience|employment)|^internships?/i,projects:/^(academic |personal )?projects?/i,education:/^education|^academic (background|qualification)/i,certs:/^(certifications?|courses|licenses)/i,ach:/^(achievements?|awards|accomplishments)/i};
+const NAMES={summary:"Summary",skills:"Skills",experience:"Experience / Internships",projects:"Projects",education:"Education",certs:"Certifications",ach:"Achievements"};
+const $=s=>document.querySelector(s);let D=null,tab="roles",pick="",qRole="";
+const esc=k=>k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+const V=/\b(built|developed|designed|implemented|created|led|optimi[sz]ed|reduced|improved|deployed|automated|integrated|launched|managed|analy[sz]ed|engineered|migrated|achieved)\b/gi;
+const MET=/\b\d+(\.\d+)?\s?(%|x\b|\+|k\b|users|ms\b|seconds|hours|requests|customers|students)/gi;
+const cnt=(s,r)=>(s.match(r)||[]).length;
+
+async function readFile(f){const n=f.name.toLowerCase(),b=await f.arrayBuffer();
+if(n.endsWith(".pdf")){pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+const d=await pdfjsLib.getDocument({data:b}).promise;let t="";
+for(let p=1;p<=d.numPages;p++){const c=await(await d.getPage(p)).getTextContent();let y=null;
+for(const it of c.items){const yy=it.transform[5];if(y!==null&&Math.abs(yy-y)>2)t+="\n";t+=it.str+" ";y=yy}t+="\n"}return t}
+if(n.endsWith(".docx"))return(await mammoth.extractRawText({arrayBuffer:b})).value;
+return new TextDecoder().decode(b)}
+
+$("#file").onchange=async e=>{const f=e.target.files[0];if(!f)return;$("#msg").textContent="Reading "+f.name+"...";
+try{$("#txt").value=(await readFile(f)).trim();$("#msg").textContent=$("#txt").value.length>80?"Loaded "+f.name+". Press Analyze.":"Little text found. If this is a scanned PDF, paste the text instead."}
+catch(x){$("#msg").textContent="Couldn’t read that file. Paste your resume text instead."}};
+$("#go").onclick=()=>{const t=$("#txt").value.trim();if(t.length<80){$("#msg").textContent="Add your resume first (upload a file or paste at least a few lines).";return}pick="";qRole="";tab="roles";D=analyze(t);draw();$("#out").scrollIntoView()};
+
+function sections(t){const S={};let cur="top";S[cur]=[];
+for(const raw of t.split(/\n/)){const l=raw.trim().replace(/[:\-–_|]+$/,"").trim();let hit=null;
+if(l.length&&l.length<34)for(const k in SEC)if(SEC[k].test(l)){hit=k;break}
+if(hit){cur=hit;S[cur]=S[cur]||[]}else S[cur].push(raw)}
+for(const k in S)S[k]=S[k].join("\n").trim();return S}
+
+function analyze(t){const low=t.toLowerCase().replace(/nodejs/g,"node.js").replace(/react\.?js/g,"react");
+const has=k=>new RegExp("(^|[^a-z0-9+#])"+esc(k)+"($|[^a-z0-9+#])").test(low);
+const roles=R.map(r=>{const hit=r[1].filter(has);return{n:r[0],kw:r[1],q:r[2],hit,miss:r[1].filter(k=>!hit.includes(k)),fit:hit.length/r[1].length}}).sort((a,b)=>b.fit-a.fit);
+return{t,low,S:sections(t),roles,words:cnt(t,/\S+/g),email:/[\w.+-]+@[\w-]+\.\w+/.test(t),phone:/(\+?\d[\d\s-]{8,}\d)/.test(t),li:/linkedin\.com/i.test(t),gh:/github\.com/i.test(t),verbs:cnt(t,V),met:cnt(t,MET)}}
+
+function review(D){const out=[],S=D.S;
+const mk=(k,fn)=>{const g=[],b=[],f=[];const c=(ok,a,w,x)=>ok?g.push(a):(b.push(w),f.push(x));fn(c,S[k]||"",!!S[k]);out.push({n:NAMES[k]||k,g,b,f})};
+{const g=[],b=[],f=[];const c=(ok,a,w,x)=>ok?g.push(a):(b.push(w),f.push(x));
+c(D.email,"Email is present.","No email found.","Add a professional email address at the top.");
+c(D.phone,"Phone number is present.","No phone number found.","Add a phone number.");
+c(D.li,"LinkedIn link is present.","No LinkedIn link.","Add your LinkedIn profile URL.");
+c(D.gh,"GitHub link is present.","No GitHub link.","Add your GitHub link so recruiters can see your code.");
+out.push({n:"Contact details",g,b,f})}
+mk("summary",(c,s,e)=>{c(e,"You have a summary.","No summary section.","Add a 2 to 3 line summary with your target role, top skills and one achievement.");
+if(e){const w=cnt(s,/\S+/g);c(w>=20&&w<=75,"Summary length is good.","Summary is too short or too long.","Keep the summary between 25 and 70 words.")}});
+mk("skills",(c,s,e)=>{const n=new Set(R.flatMap(r=>r[1]).filter(k=>new RegExp("(^|[^a-z0-9+#])"+esc(k)+"($|[^a-z0-9+#])").test(D.low))).size;
+c(e,"You have a skills section.","No clear Skills heading.","Add a section titled Skills so ATS can find it.");
+c(n>=8,"You list "+n+" recognised skills.","Only "+n+" recognised skills found.","List more relevant tools and technologies, grouped as Languages, Frameworks, Databases and Tools.")});
+mk("experience",(c,s,e)=>{c(e,"Experience or internship section found.","No experience or internship section.","Add internships, freelance or training work, even short ones.");
+if(e){c(cnt(s,V)>=4,"You use strong action verbs.","Few action verbs.","Start bullets with verbs like built, deployed, automated or reduced.");
+c(cnt(s,MET)>=2,"You include measurable results.","No measurable results.","Add numbers, for example “cut load time by 30%”.");
+c(!/responsible for|worked on|helped with|duties included/i.test(s),"No weak phrases found.","Weak phrases such as “worked on” or “responsible for”.","Replace them with what you achieved.")}});
+mk("projects",(c,s,e)=>{c(e,"Projects section found.","No projects section.","Add 2 to 3 projects with the tech stack, what you built and the result.");
+if(e){c(cnt(s,/github\.com|vercel|netlify|render\.com|http/gi)>=1,"Projects have links.","Projects have no links.","Add GitHub and live demo links.");
+c(cnt(s,MET)>=1,"Projects show impact.","Projects have no numbers.","Add users, speed, accuracy or scale.")}});
+mk("education",(c,s,e)=>{c(e,"Education section found.","No education section.","Add your degree, college and year.");
+if(e){c(/b\.?tech|b\.?e\b|bachelor|m\.?tech|mca|bca|b\.?sc|m\.?sc|mba|diploma/i.test(s),"Degree is clear.","Degree not clearly stated.","Write the full degree and branch.");
+c(/cgpa|gpa|%/i.test(s),"Score is shown.","No CGPA or percentage.","Add your CGPA or percentage.")}});
+mk("certs",(c,s,e)=>{c(e,"Certifications are listed.","No certifications section.","Add relevant certificates, for example cloud or course certificates.")});
+return out}
+
+function ats(D,r){const kw=Math.min(1,r.hit.length/Math.ceil(r.kw.length*.7)),S=D.S;
+const sec=["summary","skills","education"].filter(k=>S[k]).length+(S.experience||S.projects?1:0);
+const ct=(D.email+D.phone+D.li)/3,met=Math.min(1,D.met/4),vb=Math.min(1,D.verbs/8),len=D.words>=250&&D.words<=800?1:.4;
+const parts=[["Keyword match",kw],["Sections",sec/4],["Contact info",ct],["Measurable results",met],["Action verbs",vb],["Length",len]];
+const tot=Math.round(100*(.5*kw+.2*sec/4+.1*ct+.1*met+.05*vb+.05*len));
+const tips=[];if(r.miss.length)tips.push("Add these keywords where they are true for you: "+r.miss.slice(0,8).join(", ")+".");
+if(sec<4)tips.push("Include clear Summary, Skills, Experience or Projects, and Education headings.");
+if(met<1)tips.push("Add more numbers to show results.");if(vb<1)tips.push("Use more action verbs.");
+if(len<1)tips.push(D.words<250?"Your resume looks short. Add detail on projects and skills.":"Your resume is long. Trim to one or two pages.");
+return{tot,parts,tips}}
+
+const eh=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const QP=[
+[/business analyst|product manager|scrum/,['How do you gather and prioritise requirements?','What is the difference between a user story and a use case?','How do you handle a stakeholder who keeps changing requirements?','Which metrics would you track for a new feature?']],
+[/full ?stack|mern|mean/,R[0][2]],
+[/front ?end|react|angular|vue|ui develop/,R[1][2]],
+[/back ?end|node|django|flask|spring/,R[2][2]],
+[/data engineer|etl|spark|big data/,['What is the difference between ETL and ELT?','How does Spark process data differently from MapReduce?','How do you design a reliable data pipeline?','What is partitioning and why does it matter?']],
+[/cloud|devops|aws|azure|gcp|sre/,R[3][2]],
+[/data analy|power ?bi|tableau/,R[4][2]],
+[/machine|\bml\b|\bai\b|data scien|deep learning|genai|llm/,R[5][2]],
+[/java\b/,['What is the difference between JDK, JRE and JVM?','Explain how HashMap works internally.','What is the difference between an abstract class and an interface?','How does garbage collection work in Java?']],
+[/python/,['What is the difference between a list, a tuple and a set?','Explain decorators and generators with an example.','How does Python manage memory?','What is the GIL and why does it matter?']],
+[/test|\bqa\b|sdet|quality/,['What is the difference between smoke, sanity and regression testing?','How do you write a good test case?','What is the bug life cycle?','When would you automate a test, and when would you not?']],
+[/security|cyber|\bsoc\b|pentest/,['What is the CIA triad?','Explain XSS and SQL injection and how to prevent them.','What is the difference between symmetric and asymmetric encryption?','How would you respond to a suspected data breach?']],
+[/android|ios|mobile|flutter|kotlin/,['Explain the Android activity lifecycle.','How do you handle data storage and API calls in a mobile app?','What is the difference between native and cross-platform apps?','How do you improve app performance and battery use?']],
+[/\bui\b|\bux\b|design/,['Walk me through your design process.','How do you test whether a design is usable?','What makes an interface accessible?','How do you handle conflicting feedback from stakeholders?']],
+[/database|dba|sql/,['Explain normalization with an example.','What is the difference between clustered and non-clustered indexes?','How do you find and fix a slow query?','What are the ACID properties?']],
+[/\bhr\b|recruit|human resource/,['How do you source and screen candidates?','How do you handle a conflict between two employees?','Which HR metrics do you track?','How do you keep hiring fair?']],
+[/software|sde|developer|engineer|programmer/,R[6][2]]];
+function questions(D,role){const f=QP.find(p=>p[0].test(role.toLowerCase())),r=eh(role);
+const res=[...new Set(D.roles.flatMap(x=>x.hit))].slice(0,3).map(k=>'You listed “'+k+'”. Where did you use it, and what problem did it solve?');
+if(D.S.projects)res.push('Walk me through the project in your resume that is most relevant to a '+r+': the goal, your role, the hardest challenge and the result.');
+if(D.met<2)res.push('What measurable impact did your work have?');
+const gen=['Why do you want to work as a '+r+'?','Which skills matter most for a '+r+', and which are your strongest?'];
+if(!f)gen.push('Which tools or technologies would you use daily as a '+r+', and why?','How would you learn a new tool for this job within two weeks?');
+gen.push('Tell me about yourself.','Describe a time you fixed a difficult problem or met a tight deadline.','Where do you want to be in five years as a '+r+'?');
+return{known:!!f,role:f?f[1]:[],res,gen}}
+
+const li=a=>a.map(x=>"<li>"+x+"</li>").join("");
+const tags=(a,c)=>a.map(x=>'<span class="tag '+(c||"")+'">'+x+"</span>").join("");
+function draw(){const top=D.roles.filter(r=>r.hit.length>0).slice(0,4),cur=D.roles.find(r=>r.n==pick)||D.roles[0];
+let h='<div class="card">'+(tab=="qs"?"":'<div class="row"><label for="role"><b>Target role</b> (optional)</label><select id="role"><option value="">Best match: '+cur.n+"</option>"+R.map(r=>'<option'+(r[0]==pick?" selected":"")+">"+r[0]+"</option>").join("")+'</select></div>')+'<div class="tabs" role="tablist" style="margin-top:'+(tab=="qs"?0:16)+'px">'+
+[["roles","Roles for you"],["ats","ATS check"],["review","Section review"],["qs","Interview questions"]].map(t=>'<button class="tab" role="tab" aria-selected="'+(tab==t[0])+'" data-t="'+t[0]+'">'+t[1]+"</button>").join("")+"</div></div><div class=\"card\">";
+if(tab=="roles"){h+="<h3>Roles that fit your resume</h3>"+(top.length?top.map(r=>'<div class="sec"><div class="row" style="justify-content:space-between"><b>'+r.n+"</b><b>"+Math.round(r.fit*100)+'% match</b></div><div class="bar"><i style="width:'+Math.round(r.fit*100)+'%"></i></div><p style="margin:8px 0 0">'+tags(r.hit)+'</p><button class="btn" data-pick="'+r.n+'">Check ATS for this role</button></div>').join(""):'<p class="mute">No role skills found. Add a Skills section with your technologies.</p>')}
+if(tab=="ats"){const a=ats(D,cur);h+='<h3>ATS check for '+cur.n+'</h3><div class="score">'+a.tot+'<span class="mute" style="font-size:22px"> / 100</span></div><p class="mute">'+(a.tot>=75?"Strong match.":a.tot>=50?"Decent, with room to improve.":"Needs work for this role.")+"</p>"+
+a.parts.map(p=>'<div class="m"><span>'+p[0]+'</span><div class="bar"><i style="width:'+Math.round(p[1]*100)+'%"></i></div><b>'+Math.round(p[1]*100)+"%</b></div>").join("")+
+"<h2>Keywords found</h2>"+(tags(cur.hit)||'<p class="mute">None.</p>')+"<h2>Keywords missing</h2>"+(tags(cur.miss,"miss")||"<p>None.</p>")+"<h2>Improvements</h2><ul>"+li(a.tips.length?a.tips:["Your resume is well optimised for this role."])+"</ul>"}
+if(tab=="review"){h+=review(D).map(s=>'<div class="sec"><h3>'+s.n+'</h3><h2>Strengths</h2><ul class="g">'+li(s.g.length?s.g:["Nothing strong yet."])+'</ul><h2>Weaknesses</h2><ul class="b">'+li(s.b.length?s.b:["No major weaknesses found."])+"</ul>"+(s.f.length?"<h2>Improvements</h2><ul>"+li(s.f)+"</ul>":"")+"</div>").join("")}
+if(tab=="qs"){h+='<h3>Interview questions</h3><p class="mute">Type any role and click the button. Questions come from the role and the skills in your resume.</p><div class="row"><input id="qrole" list="rl" type="text" value="'+eh(qRole)+'" placeholder="e.g. Java Developer, Data Scientist, QA Engineer" aria-label="Role" style="flex:1;min-width:220px"><datalist id="rl">'+R.map(r=>'<option value="'+r[0]+'">').join('')+'</datalist><button class="btn main" id="qgo">Give interview questions</button></div>';if(qRole){const Q=questions(D,qRole);h+='<h2>Questions for '+eh(qRole)+'</h2>'+(Q.known?'':'<p class="mute">No specific question set for this role, so these are general questions plus ones from your resume.</p>')+(Q.role.length?'<h2>Role questions</h2><ol>'+li(Q.role)+'</ol>':'')+(Q.res.length?'<h2>From your resume</h2><ol>'+li(Q.res)+'</ol>':'')+'<h2>General questions</h2><ol>'+li(Q.gen)+'</ol>'}}
+$("#out").innerHTML=h+"</div>";
+if($("#role"))$("#role").onchange=e=>{pick=e.target.value;draw()};if($("#qgo")){const go=()=>{qRole=$("#qrole").value.trim();draw();const i=$("#qrole");if(i)i.focus()};$("#qgo").onclick=go;$("#qrole").onkeydown=e=>{if(e.key=="Enter")go()}}
+document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
+document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{pick=b.dataset.pick;tab="ats";draw()})}
+</script>
+</body>
+</html>
